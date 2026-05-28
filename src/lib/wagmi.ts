@@ -12,7 +12,7 @@ export const monadTestnet = defineChain({
 
 export const config = getDefaultConfig({
   appName: "Chog World",
-  projectId: "e4a1e1f0e1b9a1e1f0e1b9a1", 
+  projectId: "9e8b3e4e5c6d7e8f9a0b1c2d3e4f5a6b",
   chains: [monadTestnet],
   transports: { [monadTestnet.id]: http() },
 });
