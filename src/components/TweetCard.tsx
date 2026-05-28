@@ -21,7 +21,7 @@ export function TweetCard({ tweet }: { tweet: Tweet }) {
     const raw = tweet.media_urls;
     if (!raw) return [];
     if (Array.isArray(raw)) return raw;
-    try { return JSON.parse(raw as string); } catch { return []; }
+    try { return [...new Set(JSON.parse(raw as string))]; } catch { return []; }
   })();
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export function TweetCard({ tweet }: { tweet: Tweet }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-sm flex-wrap">
             <span className="font-semibold text-zinc-200">{tweet.x_author_name}</span>
-            <span className="text-zinc-500">@{tweet.x_author_handle}</span>
+            
             <span className="text-zinc-600">· {timeAgo}</span>
             {tweet.is_highlighted && <span className="text-yellow-400 text-xs">⭐ Highlight</span>}
           </div>
