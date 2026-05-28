@@ -1,0 +1,19 @@
+"use client";
+import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { defineChain } from "viem";
+import { http } from "wagmi";
+
+export const monadTestnet = defineChain({
+  id: 10143,
+  name: "Monad Testnet",
+  nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
+  rpcUrls: { default: { http: ["https://testnet-rpc.monad.xyz"] } },
+  blockExplorers: { default: { name: "MonadScan", url: "https://testnet.monadscan.com" } },
+});
+
+export const config = getDefaultConfig({
+  appName: "Chog World",
+  projectId: "chog-world",
+  chains: [monadTestnet],
+  transports: { [monadTestnet.id]: http() },
+});
