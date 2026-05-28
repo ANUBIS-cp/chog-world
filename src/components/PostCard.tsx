@@ -8,6 +8,17 @@ const ESCROW = "0xca29b70a9Bb6D663a51218c58CEe725ec45fEDC3";
 
 function getEth() { return typeof window !== "undefined" ? (window as any).ethereum : null; }
 
+function stripHtml(html: string): string {
+  if (!html) return "";
+  // Remove all HTML tags
+  let text = html.replace(/<[^>]*>/g, " ");
+  // Decode common entities
+  text = text.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, ').replace(/&#39;/g, ");
+  // Collapse multiple spaces
+  text = text.replace(/\s+/g, " ").trim();
+  return text;
+}
+
 export function PostCard({ tweet, creatorWallet }: { tweet: any; creatorWallet?: string | null }) {
   const { address } = useWallet();
   const [score, setScore] = useState(0);
@@ -17,17 +28,8 @@ export function PostCard({ tweet, creatorWallet }: { tweet: any; creatorWallet?:
   const [tipTier, setTipTier] = useState(1);
   const [tipStatus, setTipStatus] = useState("");
 
-  // Clean content - strip X embeds/frames
-  const cleanContent = (() => {
-    let text = tweet.content || "";
-    // Remove iframe embeds
-    text = text.replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[embedded content]");
-    // Remove script tags
-    text = text.replace(/<script[^>]*>.*?<\/script>/gi, "");
-    // Limit length for preview
-    if (text.length > 280) text = text.slice(0, 277) + "...";
-    return text;
-  })();
+  const cleanContent = stripHtml(tweet.content || "");
+  const displayContent = cleanContent.length > 300 ? cleanContent.slice(0, 297) + "..." : cleanContent;
 
   const media = (() => {
     const raw = tweet.media_urls;
@@ -124,7 +126,6 @@ export function PostCard({ tweet, creatorWallet }: { tweet: any; creatorWallet?:
 
         {/* Content */}
         <div className="flex-1 min-w-0 p-3">
-          {/* Author */}
           <div className="flex items-center gap-2 mb-1.5">
             {tweet.x_author_pfp ? (
               <img src={tweet.x_author_pfp} alt="" className="w-6 h-6 rounded-full border border-[#252534] shrink-0 object-cover" loading="lazy" />
@@ -144,20 +145,19 @@ export function PostCard({ tweet, creatorWallet }: { tweet: any; creatorWallet?:
           {/* Text */}
           <Link href={`/tweet/${tweet.id}`} className="block">
             <p className="text-[13px] leading-[1.5] text-[#D1D5DB] whitespace-pre-wrap break-words">
-              {cleanContent}
+              {displayContent}
             </p>
           </Link>
 
-          {/* Media - STRICTLY constrained */}
+          {/* Media */}
           {media.length > 0 && (
             <div className={`mt-2 grid gap-1.5 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
               {media.slice(0, 4).map((url: string, i: number) => (
-                <div key={i} className="relative overflow-hidden rounded-lg border border-[#252534] bg-[#0B0B0F]" style={{ maxHeight: "200px" }}>
+                <div key={i} className="relative overflow-hidden rounded-lg border border-[#252534]" style={{ height: "160px" }}>
                   <img 
                     src={url} 
                     alt="" 
                     className="w-full h-full object-cover" 
-                    style={{ maxHeight: "200px" }}
                     loading="lazy" 
                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />

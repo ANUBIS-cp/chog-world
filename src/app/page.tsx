@@ -59,7 +59,7 @@ export default function Home() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-bold">{search ? `Search: ${search}` : sort === "hot" ? "Hot" : sort === "new" ? "New" : "Top"}</h1>
+        <h1 className="text-base font-bold text-[#F0F0F5]">{search ? `Search: ${search}` : sort === "hot" ? "Hot" : sort === "new" ? "New" : "Top"}</h1>
         <div className="flex gap-1 bg-[#13131A] rounded-lg p-0.5 border border-[#1E1E2E]">
           {[
             { key: "hot", label: "Hot" },
@@ -80,7 +80,7 @@ export default function Home() {
       {loading && tweets.length === 0 && (
         <div className="space-y-3 mt-4">
           {[1,2,3].map(i => (
-            <div key={i} className="bg-[#13131A] border border-[#1E1E2E] rounded-xl h-32 animate-pulse" />
+            <div key={i} className="bg-[#13131A] border border-[#1E1E2E] rounded-xl h-24 animate-pulse" />
           ))}
         </div>
       )}
