@@ -3,10 +3,9 @@ import Link from "next/link";
 import { useWallet } from "@/lib/wallet";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { Search, Wallet, LogOut, ChevronDown, Mail, Globe, Zap } from "lucide-react";
 
 export function Nav() {
-  const { address, connect, disconnect } = useWallet();
+  const { address, hasWallet, connect, disconnect } = useWallet();
   const [user, setUser] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showUser, setShowUser] = useState(false);
@@ -49,68 +48,64 @@ export function Nav() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-bg-primary/95 backdrop-blur border-b border-border">
-      <div className="max-w-[1200px] mx-auto px-4 h-12 flex items-center gap-4">
+    <nav className="sticky top-0 z-50 bg-[#0B0B0F]/95 backdrop-blur border-b border-[#1E1E2E]">
+      <div className="max-w-2xl mx-auto px-4 h-12 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 bg-accent rounded-lg flex items-center justify-center">
-            <Zap size={16} className="text-white" />
+          <div className="w-7 h-7 bg-[#7C5CFF] rounded-lg flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           </div>
-          <span className="font-bold text-sm hidden sm:block">Chog World</span>
+          <span className="font-bold text-sm">Chog World</span>
         </Link>
 
-        <form onSubmit={doSearch} className="flex-1 max-w-md">
+        <form onSubmit={doSearch} className="flex-1 max-w-sm mx-4">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B5563]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.34-4.34"/></svg>
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search CHOG..."
-              className="w-full bg-bg-tertiary border border-border rounded-lg pl-9 pr-4 py-1.5 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent/50 transition-colors"
+              className="w-full bg-[#1A1A24] border border-[#252534] rounded-lg pl-9 pr-4 py-1.5 text-sm text-[#F0F0F5] placeholder-[#4B5563] focus:outline-none focus:border-[#7C5CFF]/50 transition-colors"
             />
           </div>
         </form>
 
         <div className="flex items-center gap-2 shrink-0">
           {address ? (
-            <button onClick={disconnect} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-tertiary border border-border text-xs font-mono text-text-secondary hover:border-border-hover transition">
-              <Wallet size={13} />
-              <span className="hidden sm:inline">{address.slice(0, 5)}...{address.slice(-3)}</span>
+            <button onClick={disconnect} className="text-xs bg-[#1A1A24] border border-[#252534] px-3 py-1.5 rounded-lg hover:border-[#3A3A50] transition">
+              {address.slice(0, 5)}...{address.slice(-3)}
             </button>
           ) : (
-            <button onClick={connect} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-xs text-green-400 hover:bg-green-500/20 transition">
-              <Wallet size={13} />
-              <span className="hidden sm:inline">Connect</span>
+            <button onClick={connect} className={`text-xs px-3 py-1.5 rounded-lg transition ${hasWallet ? "bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20" : "bg-[#3A3A50] text-[#9CA3AF] cursor-help"}`} title={hasWallet ? "Connect your wallet" : "No wallet extension detected"}>
+              {hasWallet ? "Connect" : "No Wallet"}
             </button>
           )}
 
           {user ? (
             <div className="relative" ref={userRef}>
-              <button onClick={() => setShowUser(!showUser)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-tertiary border border-border text-xs text-text-secondary hover:border-border-hover transition">
-                <span className="max-w-[100px] truncate">{user.email}</span>
-                <ChevronDown size={12} />
+              <button onClick={() => setShowUser(!showUser)} className="text-xs bg-[#1A1A24] border border-[#252534] px-3 py-1.5 rounded-lg hover:border-[#3A3A50] transition">
+                {user.email?.slice(0, 10)}...
               </button>
               {showUser && (
-                <div className="absolute right-0 mt-2 bg-bg-secondary border border-border rounded-xl p-1 min-w-[160px] shadow-xl z-50">
-                  <button onClick={() => { supabase.auth.signOut(); setShowUser(false); }} className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-bg-tertiary rounded-lg transition">
-                    <LogOut size={13} /> Sign Out
+                <div className="absolute right-0 mt-2 bg-[#13131A] border border-[#252534] rounded-xl p-1 min-w-[140px] shadow-xl z-50">
+                  <button onClick={() => { supabase.auth.signOut(); setShowUser(false); }} className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-[#1A1A24] rounded-lg transition">
+                    Sign Out
                   </button>
                 </div>
               )}
             </div>
           ) : (
             <div className="relative" ref={authRef}>
-              <button onClick={() => setShowAuth(!showAuth)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-medium hover:bg-accent-hover transition">
+              <button onClick={() => setShowAuth(!showAuth)} className="text-xs bg-[#7C5CFF] text-white px-3 py-1.5 rounded-lg hover:bg-[#8B6DFF] transition">
                 Sign In
-                <ChevronDown size={12} />
               </button>
               {showAuth && (
-                <div className="absolute right-0 mt-2 bg-bg-secondary border border-border rounded-xl p-1 min-w-[180px] shadow-xl z-50">
-                  <button onClick={signInGoogle} className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs text-text-primary hover:bg-bg-tertiary rounded-lg transition">
-                    <Globe size={14} /> Google
+                <div className="absolute right-0 mt-2 bg-[#13131A] border border-[#252534] rounded-xl p-1 min-w-[160px] shadow-xl z-50">
+                  <button onClick={signInGoogle} className="w-full text-left px-3 py-2 text-xs text-[#F0F0F5] hover:bg-[#1A1A24] rounded-lg transition">
+                    Google
                   </button>
-                  <button onClick={signInEmail} className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs text-text-primary hover:bg-bg-tertiary rounded-lg transition">
-                    <Mail size={14} /> Email
+                  <button onClick={signInEmail} className="w-full text-left px-3 py-2 text-xs text-[#F0F0F5] hover:bg-[#1A1A24] rounded-lg transition">
+                    Email
                   </button>
                 </div>
               )}

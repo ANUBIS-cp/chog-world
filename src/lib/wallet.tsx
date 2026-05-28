@@ -3,12 +3,14 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 
 interface WalletContextType {
   address: string | null;
+  hasWallet: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
 }
 
 const WalletContext = createContext<WalletContextType>({
   address: null,
+  hasWallet: false,
   connect: async () => {},
   disconnect: () => {},
 });
@@ -21,21 +23,38 @@ function getEth() {
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
+  const [hasWallet, setHasWallet] = useState(false);
+
+  useEffect(() => {
+    // Check for wallet immediately and on interval (some wallets inject late)
+    const checkWallet = () => {
+      const eth = getEth();
+      setHasWallet(!!eth);
+      if (eth) {
+        eth.request({ method: "eth_accounts" })
+          .then((accounts: string[]) => accounts[0] && setAddress(accounts[0]))
+          .catch(() => {});
+      }
+    };
+    checkWallet();
+    const interval = setInterval(checkWallet, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const eth = getEth();
     if (!eth) return;
-    eth.request({ method: "eth_accounts" })
-      .then((accounts: string[]) => accounts[0] && setAddress(accounts[0]))
-      .catch(() => {});
     const handler = (accounts: string[]) => setAddress(accounts[0] || null);
     eth.on("accountsChanged", handler);
     return () => eth.removeListener("accountsChanged", handler);
-  }, []);
+  }, [hasWallet]);
 
   const connect = useCallback(async () => {
     const eth = getEth();
-    if (!eth) { window.alert("Install MetaMask or Rabby wallet extension"); return; }
+    if (!eth) { 
+      window.alert("No wallet detected.\n\nPlease install Rabby or MetaMask extension and refresh the page."); 
+      return; 
+    }
     try {
       const accounts = await eth.request({ method: "eth_requestAccounts" });
       setAddress(accounts[0]);
@@ -59,7 +78,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const disconnect = useCallback(() => setAddress(null), []);
 
   return (
-    <WalletContext.Provider value={{ address, connect, disconnect }}>
+    <WalletContext.Provider value={{ address, hasWallet, connect, disconnect }}>
       {children}
     </WalletContext.Provider>
   );
