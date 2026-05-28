@@ -18,18 +18,14 @@ export function Nav() {
   }, []);
 
   async function signIn() {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    }).catch(() => {
-      // Fallback to email if Google not configured
-      supabase.auth.signInWithOAuth({ provider: "google", options: { queryParams: { access_type: "offline", prompt: "consent" } } }).catch(async () => {
-        const email = prompt("Enter your email to sign in:");
-        if (email) {
-          await supabase.auth.signInWithOtp({ email });
-        }
-      });
+    const email = prompt("Enter your email to sign in:");
+    if (!email) return;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin },
     });
+    if (error) alert(error.message);
+    else alert("Check your email for a magic link!");
   }
 
   return (
@@ -41,29 +37,17 @@ export function Nav() {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <Link href="/profile" className="text-sm text-zinc-400 hover:text-white transition">
-                Profile
-              </Link>
-              <button
-                onClick={() => supabase.auth.signOut()}
-                className="text-sm text-zinc-500 hover:text-red-400 transition"
-              >
+              <span className="text-sm text-zinc-400">{user.email}</span>
+              <button onClick={() => supabase.auth.signOut()} className="text-sm text-zinc-500 hover:text-red-400 transition">
                 Sign Out
               </button>
             </>
           ) : (
-            <button
-              onClick={signIn}
-              className="text-sm bg-purple-600 hover:bg-purple-500 px-3 py-1.5 rounded-md transition"
-            >
+            <button onClick={signIn} className="text-sm bg-purple-600 hover:bg-purple-500 px-3 py-1.5 rounded-md transition">
               Sign In
             </button>
           )}
-          <ConnectButton
-            showBalance={false}
-            chainStatus="icon"
-            accountStatus="address"
-          />
+          <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
         </div>
       </div>
     </nav>
