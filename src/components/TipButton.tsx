@@ -12,7 +12,7 @@ const TIERS = [
   { key: 3, label: "0.1 MON",  display: "🐸" },
 ];
 
-const ESCROW_CONTRACT = "0x48dEdffAF9c10255AB25C1EA56FF5eecAB1856DB";
+const ESCROW_CONTRACT = "0xca29b70a9Bb6D663a51218c58CEe725ec45fEDC3";
 
 interface TipButtonProps {
   tweetId: number;

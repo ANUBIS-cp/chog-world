@@ -15,7 +15,7 @@ const monadTestnet = defineChain({
 });
 
 const client = createPublicClient({ chain: monadTestnet, transport: http() });
-const ESCROW_ADDRESS = "0x48dEdffAF9c10255AB25C1EA56FF5eecAB1856DB";
+const ESCROW_ADDRESS = "0xca29b70a9Bb6D663a51218c58CEe725ec45fEDC3";
 
 const ESCROW_ABI = parseAbi([
   "event TipReceived(address indexed tipper, string indexed xHandle, bytes32 indexed tweetId, uint256 amount)",
