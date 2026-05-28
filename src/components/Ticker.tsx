@@ -15,26 +15,26 @@ export function Ticker() {
   const [items, setItems] = useState<Activity[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
+    async function fetchActivity() {
+      const { data } = await supabase
+        .from("activity_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (!cancelled && data) setItems(data);
+    }
     fetchActivity();
     const interval = setInterval(fetchActivity, 15000);
-    return () => clearInterval(interval);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
-
-  async function fetchActivity() {
-    const { data } = await supabase
-      .from("activity_log")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(10);
-    if (data) setItems(data);
-  }
 
   if (!items.length) return null;
 
   const text = items
     .map((a) => {
       if (a.event_type === "tip") {
-        return `💸 ${a.actor_name || a.actor_handle} just tipped ${a.metadata?.amount} ${a.metadata?.token} to @${a.metadata?.to_handle}`;
+        return `💸 ${a.actor_name || a.actor_handle} tipped ${a.metadata?.amount || ""} ${a.metadata?.token || "MON"} to @${a.metadata?.to_handle || a.actor_handle}`;
       }
       if (a.event_type === "highlight") {
         return `⭐ @${a.actor_handle} tweet highlighted!`;
@@ -45,8 +45,8 @@ export function Ticker() {
     .join("  •  ");
 
   return (
-    <div className="bg-purple-900/30 border-b border-purple-800/30 overflow-hidden h-7 flex items-center">
-      <div className="animate-marquee whitespace-nowrap text-xs text-purple-300">
+    <div className="bg-[#7C5CFF]/10 border-b border-[#7C5CFF]/20 overflow-hidden h-7 flex items-center">
+      <div className="animate-marquee whitespace-nowrap text-xs text-[#7C5CFF] font-medium px-4">
         {text}
       </div>
     </div>

@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
 """Chog scraper — filters replies, prioritizes original tweets + media."""
-import json, os, re, time, urllib.request, browser_cookie3
+import json, os, re, time, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+import browser_cookie3
 
-SUPABASE_URL = "https://sqzwubsngcncltftflyy.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxend1YnNuZ2NuY2x0ZnRmbHl5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTk1NTg3MiwiZXhwIjoyMDk1NTMxODcyfQ.OJWCIISRhMkw5_nEJ-aur8W9ZtMoviP7jDx2BREjVbs"
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://sqzwubsngcncltftflyy.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+if not SUPABASE_KEY:
+    raise ValueError("SUPABASE_SERVICE_ROLE_KEY not set in environment")
+
 QUERIES = ["$CHOG", "#chogcoin", "@chogNFT"]
 SEEN_FILE = Path(os.path.expanduser("~/chog-world/seen_tweets.txt"))
 CHROME_BIN = "/opt/google/chrome/chrome"
@@ -26,7 +36,8 @@ def get_cookies():
         for c in cj:
             if "x.com" in c.domain or "twitter.com" in c.domain:
                 cookies.append({"name": c.name, "value": c.value, "domain": c.domain, "path": c.path or "/", "httpOnly": False, "secure": True, "sameSite": "Lax"})
-    except: pass
+    except Exception as e:
+        print(f"    [!] Cookie error: {e}")
     return cookies
 
 def search_x(query):
@@ -47,7 +58,8 @@ def search_x(query):
                 page.wait_for_timeout(1500)
             ids = list(set(re.findall(r"/status/(\d+)", page.content())))
             ctx.close(); browser.close()
-    except Exception as e: print(f"    [!] {str(e)[:100]}")
+    except Exception as e:
+        print(f"    [!] Search error: {str(e)[:100]}")
     return ids
 
 def fetch_tweet(tid):
@@ -55,30 +67,21 @@ def fetch_tweet(tid):
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=10) as r:
             return json.loads(r.read())
-    except: return None
+    except Exception as e:
+        print(f"    [!] Fetch tweet {tid}: {e}")
+        return None
 
 def is_good_tweet(data):
-    """Filter out low-quality replies. Keep originals and meaningful tweets."""
     text = data.get("text", "")
     reply_to = data.get("in_reply_to_screen_name", "")
     user = data.get("user", {}).get("screen_name", "")
-
-    # Skip if it is a reply to someone NOT Chog-related
     if reply_to and reply_to != user:
         return False
-
     text_lower = text.lower()
-    if not any(t in text_lower for t in ["chog"]):
+    if "chog" not in text_lower:
         return False
-
-    # Keep tweets with media, links, or substantial content
-    has_media = bool(data.get("mediaDetails") or data.get("photos"))
-    has_link = "http" in text
-
-    # Skip very short replies (under 15 chars)
     if len(text) < 15:
         return False
-
     return True
 
 def save_tweet(data):
@@ -103,10 +106,16 @@ def save_tweet(data):
     }).encode()
 
     headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}", "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates"}
-    try:
-        urllib.request.urlopen(urllib.request.Request(f"{SUPABASE_URL}/rest/v1/tweets", data=payload, headers=headers, method="POST"), timeout=10)
-        return True
-    except: return False
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            urllib.request.urlopen(urllib.request.Request(f"{SUPABASE_URL}/rest/v1/tweets", data=payload, headers=headers, method="POST"), timeout=10)
+            return True
+        except Exception as e:
+            print(f"    [!] Save attempt {attempt + 1}/{max_retries} failed: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+    return False
 
 def run():
     print(f"[{datetime.now().isoformat()}] Scraper starting...")
@@ -128,8 +137,8 @@ def run():
             u = data.get("user", {})
             sn = u.get("screen_name", "")
             txt = data.get("text", "")
-            has_img = "📷" if data.get("mediaDetails") else ""; print(f"  [+] @{sn}: {txt[:60]} {has_img}")
             has_img = "📷" if data.get("mediaDetails") else ""
+            print(f"  [+] @{sn}: {txt[:60]} {has_img}")
             saved += 1; seen.add(tid)
     save_seen(seen)
     print(f"  Saved: {saved}, Total: {len(seen)}")

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit } from "@/lib/rate-limit";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -7,6 +8,12 @@ const supabase = createClient(
 );
 
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") || "unknown";
+  const limit = rateLimit(`activity:${ip}`, 30, 60000);
+  if (!limit.success) {
+    return NextResponse.json({ error: "Rate limited" }, { status: 429 });
+  }
+
   const { data, error } = await supabase
     .from("activity_log")
     .select("*")

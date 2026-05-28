@@ -1,17 +1,22 @@
 "use client";
-import { useState, useEffect, createContext, useContext, useCallback } from "react";
+import { useState, useEffect, createContext, useContext, useCallback, useRef } from "react";
+import { toast } from "sonner";
 
 interface WalletState {
   address: string | null;
   chainId: number | null;
+  isConnecting: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   sendTx: (to: string, valueWei: string) => Promise<string>;
 }
 
 const WalletContext = createContext<WalletState>({
-  address: null, chainId: null,
-  connect: async () => {}, disconnect: () => {},
+  address: null,
+  chainId: null,
+  isConnecting: false,
+  connect: async () => {},
+  disconnect: () => {},
   sendTx: async () => "",
 });
 
@@ -25,23 +30,41 @@ function getEth() {
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const listenersRef = useRef<(() => void)[]>([]);
 
   useEffect(() => {
     const eth = getEth();
     if (!eth) return;
-    eth.request({ method: "eth_accounts" }).then((accounts: string[]) => {
-      if (accounts.length > 0) setAddress(accounts[0]);
-    }).catch(() => {});
-    eth.request({ method: "eth_chainId" }).then((id: string) => {
-      setChainId(parseInt(id, 16));
-    }).catch(() => {});
-    eth.on("accountsChanged", (accounts: string[]) => setAddress(accounts[0] || null));
-    eth.on("chainChanged", (id: string) => setChainId(parseInt(id, 16)));
+
+    const onAccounts = (accounts: string[]) => setAddress(accounts[0] || null);
+    const onChain = (id: string) => setChainId(parseInt(id, 16));
+
+    eth.request({ method: "eth_accounts" })
+      .then((accounts: string[]) => { if (accounts[0]) setAddress(accounts[0]); })
+      .catch(() => {});
+    eth.request({ method: "eth_chainId" })
+      .then((id: string) => setChainId(parseInt(id, 16)))
+      .catch(() => {});
+
+    eth.on("accountsChanged", onAccounts);
+    eth.on("chainChanged", onChain);
+
+    listenersRef.current = [
+      () => eth.removeListener("accountsChanged", onAccounts),
+      () => eth.removeListener("chainChanged", onChain),
+    ];
+
+    return () => {
+      listenersRef.current.forEach(cleanup => cleanup());
+      listenersRef.current = [];
+    };
   }, []);
 
   const connect = useCallback(async () => {
     const eth = getEth();
-    if (!eth) { alert("No wallet found. Install MetaMask or Rabby extension."); return; }
+    if (!eth) { toast.error("No wallet found. Install MetaMask or Rabby."); return; }
+    setIsConnecting(true);
     try {
       const accounts = await eth.request({ method: "eth_requestAccounts" });
       const addr = accounts[0];
@@ -59,8 +82,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         }
       }
       setChainId(10143);
+      toast.success("Wallet connected");
     } catch (e: any) {
-      alert("Connection failed: " + (e.message || e));
+      toast.error("Connection failed: " + (e.message || e));
+    } finally {
+      setIsConnecting(false);
     }
   }, []);
 
@@ -72,7 +98,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const sendTx = useCallback(async (to: string, valueWei: string): Promise<string> => {
     const eth = getEth();
     if (!eth || !address) throw new Error("Wallet not connected");
-    // Convert decimal wei to hex for eth_sendTransaction
     const valueHex = "0x" + BigInt(valueWei).toString(16);
     const txHash = await eth.request({
       method: "eth_sendTransaction",
@@ -82,7 +107,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [address]);
 
   return (
-    <WalletContext.Provider value={{ address, chainId, connect, disconnect, sendTx }}>
+    <WalletContext.Provider value={{ address, chainId, isConnecting, connect, disconnect, sendTx }}>
       {children}
     </WalletContext.Provider>
   );
