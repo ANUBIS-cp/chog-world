@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { TweetCard } from "@/components/TweetCard";
-import { TipButton } from "@/components/TipButton";
 import { CommentSection } from "@/components/CommentSection";
 
 export default function TweetPage() {
@@ -36,14 +35,7 @@ export default function TweetPage() {
   return (
     <div className="py-6">
       <TweetCard tweet={tweet} />
-      <div className="mt-3">
-        <TipButton
-          tweetId={tweet.id}
-          toHandle={tweet.x_author_handle}
-          toName={tweet.x_author_name}
-          creatorWallet={creatorWallet}
-        />
-      </div>
+      
       <CommentSection tweetId={tweet.id} />
     </div>
   );
