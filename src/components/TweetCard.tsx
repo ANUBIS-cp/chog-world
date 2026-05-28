@@ -107,7 +107,6 @@ export function TweetCard({ tweet, creatorWallet }: any) {
     if (s < 86400) return Math.floor(s/3600)+"h"; return Math.floor(s/86400)+"d";
   })();
 
-  if (typeof window === "undefined") return <div className="bg-[#111118] rounded-xl p-4 border border-[#1a1a2e]">Loading...</div>;
 
   return (
     <div className="bg-[#111118] rounded-xl p-4 border border-[#1a1a2e] hover:border-[#27274a] transition">
