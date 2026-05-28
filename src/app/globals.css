@@ -2,59 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --bg-primary: #0B0B0F;
-    --bg-secondary: #13131A;
-    --bg-tertiary: #1A1A24;
-    --border: #1E1E2E;
-    --border-hover: #2A2A40;
-    --text-primary: #F0F0F5;
-    --text-secondary: #9CA3AF;
-    --text-tertiary: #6B7280;
-    --accent: #7C5CFF;
-    --accent-hover: #8B6DFF;
-    --accent-glow: rgba(124, 92, 255, 0.12);
-    --success: #22C55E;
-    --error: #EF4444;
-  }
-
-  body {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: Inter, system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  ::selection {
-    background: var(--accent-glow);
-    color: var(--accent);
-  }
-}
-
-@layer components {
-  .card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    transition: border-color 150ms ease;
-  }
-
-  .card:hover {
-    border-color: var(--border-hover);
-  }
-}
+body { background: #0B0B0F; color: #F0F0F5; -webkit-font-smoothing: antialiased; }
 
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-primary); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+::-webkit-scrollbar-track { background: #0B0B0F; }
+::-webkit-scrollbar-thumb { background: #1E1E2E; border-radius: 3px; }
 
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-
 .animate-shimmer {
   background: linear-gradient(90deg, #1A1A24 25%, #252534 50%, #1A1A24 75%);
   background-size: 200% 100%;
@@ -65,7 +22,6 @@
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
 }
-
 .animate-marquee {
   display: inline-block;
   animation: marquee 30s linear infinite;
