@@ -1,27 +1,20 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { TipButton } from "@/components/TipButton";
 import Link from "next/link";
 
-interface Tweet {
-  id: number; x_id: string; x_author_handle: string; x_author_name: string;
-  x_author_pfp: string; content: string; media_urls: any; x_url: string;
-  posted_at: string; is_highlighted: boolean;
-}
-
-export function TweetCard({ tweet }: { tweet: Tweet }) {
+export function TweetCard({ tweet, creatorWallet }: any) {
   const [score, setScore] = useState(0);
   const [myVote, setMyVote] = useState(0);
   const [user, setUser] = useState<any>(null);
-  const [tipCount, setTipCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
 
-  // Parse media_urls — Supabase returns it as a string
-  const media: string[] = (() => {
+  const media = (() => {
     const raw = tweet.media_urls;
     if (!raw) return [];
     if (Array.isArray(raw)) return raw;
-    try { return [...new Set(JSON.parse(raw as string))]; } catch { return []; }
+    try { return [...new Set(JSON.parse(raw))]; } catch { return []; }
   })();
 
   useEffect(() => {
@@ -30,54 +23,21 @@ export function TweetCard({ tweet }: { tweet: Tweet }) {
   }, [tweet.id]);
 
   async function fetchCounts() {
+    const { count: ups } = await supabase.from("tweet_votes").select("*", { count: "exact", head: true }).eq("tweet_id", tweet.id).eq("vote_type", 1);
+    const { count: downs } = await supabase.from("tweet_votes").select("*", { count: "exact", head: true }).eq("tweet_id", tweet.id).eq("vote_type", -1);
+    setScore((ups||0) - (downs||0));
     const { data: u } = await supabase.auth.getUser();
-    const uid = u.user?.id;
-
-    // Score via direct count instead of RPC
-    const { count: ups } = await supabase
-      .from("tweet_votes")
-      .select("*", { count: "exact", head: true })
-      .eq("tweet_id", tweet.id)
-      .eq("vote_type", 1);
-    const { count: downs } = await supabase
-      .from("tweet_votes")
-      .select("*", { count: "exact", head: true })
-      .eq("tweet_id", tweet.id)
-      .eq("vote_type", -1);
-    setScore((ups || 0) - (downs || 0));
-
-    // My vote
-    if (uid) {
-      const { data: v } = await supabase
-        .from("tweet_votes")
-        .select("vote_type")
-        .eq("tweet_id", tweet.id)
-        .eq("user_id", uid)
-        .single();
+    if (u.user) {
+      const { data: v } = await supabase.from("tweet_votes").select("vote_type").eq("tweet_id", tweet.id).eq("user_id", u.user.id).single();
       setMyVote(v?.vote_type || 0);
     }
-
-    // Comment count
-    const { count: cc } = await supabase
-      .from("comments")
-      .select("*", { count: "exact", head: true })
-      .eq("tweet_id", tweet.id);
+    const { count: cc } = await supabase.from("comments").select("*", { count: "exact", head: true }).eq("tweet_id", tweet.id);
     setCommentCount(cc || 0);
-
-    // Tip count
-    const { count: tc } = await supabase
-      .from("tips")
-      .select("*", { count: "exact", head: true })
-      .eq("tweet_id", tweet.id);
-    setTipCount(tc || 0);
   }
 
   async function vote(type: number) {
     const { data: u } = await supabase.auth.getUser();
-    if (!u.user) {
-      alert("Sign in to vote");
-      return;
-    }
+    if (!u.user) return alert("Sign in to vote");
     if (myVote === type) {
       await supabase.from("tweet_votes").delete().eq("tweet_id", tweet.id).eq("user_id", u.user.id);
       setMyVote(0);
@@ -88,78 +48,40 @@ export function TweetCard({ tweet }: { tweet: Tweet }) {
     fetchCounts();
   }
 
-  const timeAgo = getTimeAgo(tweet.posted_at);
+  const timeAgo = (() => {
+    const s = Math.floor((Date.now() - new Date(tweet.posted_at).getTime()) / 1000);
+    if (s < 60) return "now"; if (s < 3600) return Math.floor(s/60)+"m";
+    if (s < 86400) return Math.floor(s/3600)+"h"; return Math.floor(s/86400)+"d";
+  })();
 
   return (
-    <div className={`bg-[#111118] rounded-xl p-4 border ${tweet.is_highlighted ? "border-purple-500/50" : "border-[#1a1a2e]"} hover:border-[#27274a] transition`}>
+    <div className="bg-[#111118] rounded-xl p-4 border border-[#1a1a2e] hover:border-[#27274a] transition">
       <div className="flex items-start gap-3">
-        {tweet.x_author_pfp && (
-          <img src={tweet.x_author_pfp} className="w-10 h-10 rounded-full shrink-0" alt="" />
-        )}
+        {tweet.x_author_pfp && <img src={tweet.x_author_pfp} className="w-10 h-10 rounded-full shrink-0" alt="" />}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-sm flex-wrap">
-            <span className="font-semibold text-zinc-200">{tweet.x_author_name}</span>
-            
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-semibold">{tweet.x_author_name}</span>
             <span className="text-zinc-600">· {timeAgo}</span>
-            {tweet.is_highlighted && <span className="text-yellow-400 text-xs">⭐ Highlight</span>}
+            {tweet.is_highlighted && <span className="text-yellow-400 text-xs">⭐</span>}
           </div>
-          <p className="mt-1.5 text-zinc-200 whitespace-pre-wrap break-words leading-relaxed">{tweet.content}</p>
+          <p className="mt-1 text-zinc-200 whitespace-pre-wrap break-words">{tweet.content}</p>
           {media.length > 0 && (
             <div className={`mt-3 grid gap-2 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-              {media.slice(0, 4).map((url, i) => (
-                <img
-                  key={i}
-                  src={url}
-                  className="rounded-lg object-cover w-full max-h-80 border border-[#1a1a2e]"
-                  alt=""
-                  loading="lazy"
-                />
+              {media.slice(0,4).map((url: string, i: number) => (
+                <img key={i} src={url} className="rounded-lg object-cover w-full max-h-80 border border-[#1a1a2e]" alt="" loading="lazy" />
               ))}
             </div>
           )}
         </div>
       </div>
-
-      <div className="mt-3 flex items-center gap-4 text-sm border-t border-[#1a1a2e] pt-3">
-        <button
-          onClick={() => vote(1)}
-          className={`flex items-center gap-1 px-2 py-1 rounded-md transition ${
-            myVote === 1 ? "bg-purple-600/30 text-purple-400" : "text-zinc-500 hover:text-purple-400 hover:bg-purple-600/10"
-          }`}
-        >
-          ▲ {score > 0 ? score : score < 0 ? "" : ""}
-        </button>
-        <span className="text-zinc-400 min-w-[1rem]">{score !== 0 ? score : ""}</span>
-        <button
-          onClick={() => vote(-1)}
-          className={`flex items-center gap-1 px-2 py-1 rounded-md transition ${
-            myVote === -1 ? "bg-red-600/30 text-red-400" : "text-zinc-500 hover:text-red-400 hover:bg-red-600/10"
-          }`}
-        >
-          ▼
-        </button>
-        <Link href={`/tweet/${tweet.id}`} className="text-zinc-500 hover:text-zinc-300 transition ml-2">
-          💬 {commentCount || 0}
-        </Link>
-        <Link href={`/tweet/${tweet.id}`} className="text-zinc-500 hover:text-purple-400 transition">
-          💸 Tip {tipCount > 0 ? `(${tipCount})` : ""}
-        </Link>
-        <Link
-          href={tweet.x_url}
-          target="_blank"
-          className="text-zinc-500 hover:text-blue-400 transition ml-auto text-xs"
-        >
-          View on X ↗
-        </Link>
+      <div className="mt-3 flex items-center gap-3 text-sm border-t border-[#1a1a2e] pt-3">
+        <button onClick={() => vote(1)} className={"px-2 py-1 rounded "+ (myVote===1?"bg-purple-600/30 text-purple-400":"text-zinc-500 hover:text-purple-400")}>▲</button>
+        <span className="text-zinc-400 text-xs min-w-[1.5rem]">{score||""}</span>
+        <button onClick={() => vote(-1)} className={"px-2 py-1 rounded "+ (myVote===-1?"bg-red-600/30 text-red-400":"text-zinc-500 hover:text-red-400")}>▼</button>
+        <Link href={"/tweet/"+tweet.id} className="text-zinc-500 hover:text-zinc-300 ml-2">💬 {commentCount||0}</Link>
+        <TipButton tweetId={tweet.id} toHandle={tweet.x_author_handle} toName={tweet.x_author_name} creatorWallet={creatorWallet} />
+        <Link href={tweet.x_url} target="_blank" className="text-zinc-600 hover:text-blue-400 ml-auto text-xs">X ↗</Link>
       </div>
     </div>
   );
-}
-
-function getTimeAgo(dateStr: string) {
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-  return `${Math.floor(seconds / 86400)}d`;
 }
