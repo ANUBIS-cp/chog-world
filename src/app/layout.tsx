@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { Providers } from "./providers";
 import { Nav } from "@/components/Nav";
 import { Sidebar } from "@/components/Sidebar";
@@ -12,12 +13,6 @@ const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" }
 export const metadata: Metadata = {
   title: "Chog World — CHOG Meme Feed & Tipping",
   description: "The Chog community feed. Vote, tip, and comment on the best Chog memes. Built on Monad.",
-  openGraph: {
-    title: "Chog World",
-    description: "Vote, tip, and comment on Chog memes. Built on Monad.",
-    type: "website",
-  },
-  twitter: { card: "summary_large_image", title: "Chog World" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -28,8 +23,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Ticker />
           <Nav />
           <div className="flex max-w-[1400px] mx-auto">
-            <Sidebar />
-            <main className="flex-1 min-w-0 px-4 pb-20 pt-4 lg:ml-[240px]">
+            <Suspense fallback={<aside className="hidden lg:block w-[220px]" />}>
+              <Sidebar />
+            </Suspense>
+            <main className="flex-1 min-w-0 px-3 sm:px-4 pb-20 pt-3 lg:ml-[220px]">
               {children}
             </main>
           </div>
