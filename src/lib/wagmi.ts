@@ -1,7 +1,7 @@
 "use client";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { defineChain } from "viem";
 import { http } from "wagmi";
+import { defineChain } from "viem";
 
 export const monadTestnet = defineChain({
   id: 10143,
@@ -13,7 +13,7 @@ export const monadTestnet = defineChain({
 
 export const config = getDefaultConfig({
   appName: "Chog World",
-  projectId: "chog-world",
+  projectId: "d3m0-ch0g-w0r1d-ABC123XYZ",
   chains: [monadTestnet],
   transports: { [monadTestnet.id]: http() },
 });
