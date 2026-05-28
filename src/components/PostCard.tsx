@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useWallet } from "@/lib/wallet";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { ArrowBigUp, ArrowBigDown, MessageSquare, ExternalLink, Zap } from "lucide-react";
 
 const ESCROW = "0xca29b70a9Bb6D663a51218c58CEe725ec45fEDC3";
 
@@ -17,6 +16,18 @@ export function PostCard({ tweet, creatorWallet }: { tweet: any; creatorWallet?:
   const [showTip, setShowTip] = useState(false);
   const [tipTier, setTipTier] = useState(1);
   const [tipStatus, setTipStatus] = useState("");
+
+  // Clean content - strip X embeds/frames
+  const cleanContent = (() => {
+    let text = tweet.content || "";
+    // Remove iframe embeds
+    text = text.replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[embedded content]");
+    // Remove script tags
+    text = text.replace(/<script[^>]*>.*?<\/script>/gi, "");
+    // Limit length for preview
+    if (text.length > 280) text = text.slice(0, 277) + "...";
+    return text;
+  })();
 
   const media = (() => {
     const raw = tweet.media_urls;
@@ -96,66 +107,79 @@ export function PostCard({ tweet, creatorWallet }: { tweet: any; creatorWallet?:
   }
 
   return (
-    <div className="card card-hover flex overflow-hidden">
-      {/* Vote Rail */}
-      <div className="flex flex-col items-center py-2 px-1.5 border-r border-border min-w-[44px]">
-        <button onClick={() => vote(1)} className={`p-1 rounded transition ${myVote === 1 ? "text-upvote" : "text-text-tertiary hover:text-upvote"}`}>
-          <ArrowBigUp size={20} strokeWidth={myVote === 1 ? 2.5 : 2} />
-        </button>
-        <span className={`text-xs font-mono font-bold my-0.5 ${myVote === 1 ? "text-upvote" : myVote === -1 ? "text-downvote" : "text-text-secondary"}`}>
-          {score}
-        </span>
-        <button onClick={() => vote(-1)} className={`p-1 rounded transition ${myVote === -1 ? "text-downvote" : "text-text-tertiary hover:text-downvote"}`}>
-          <ArrowBigDown size={20} strokeWidth={myVote === -1 ? 2.5 : 2} />
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0 p-3">
-        <div className="flex items-center gap-2 mb-1.5">
-          {tweet.x_author_pfp ? (
-            <img src={tweet.x_author_pfp} alt="" className="w-7 h-7 rounded-full border border-border shrink-0 object-cover" loading="lazy" />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-[10px] font-bold text-accent shrink-0">
-              {tweet.x_author_name?.[0] || "?"}
-            </div>
-          )}
-          <div className="flex items-center gap-1.5 text-xs flex-wrap">
-            <span className="font-semibold text-text-primary">{tweet.x_author_name}</span>
-            <span className="text-text-tertiary">@{tweet.x_author_handle}</span>
-            <span className="text-border-hover">·</span>
-            <span className="text-text-tertiary">{timeAgo}</span>
-          </div>
+    <div className="bg-[#13131A] border border-[#1E1E2E] rounded-xl overflow-hidden hover:border-[#2A2A40] transition-colors duration-200">
+      <div className="flex">
+        {/* Vote Rail */}
+        <div className="flex flex-col items-center py-2 px-1.5 border-r border-[#1E1E2E] min-w-[44px]">
+          <button onClick={() => vote(1)} className={`text-[15px] leading-none p-1 rounded transition ${myVote === 1 ? "text-[#FF8B60]" : "text-[#4B5563] hover:text-[#FF8B60]"}`}>
+            &#9650;
+          </button>
+          <span className={`text-[11px] font-mono font-bold my-0.5 ${myVote === 1 ? "text-[#FF8B60]" : myVote === -1 ? "text-[#9494FF]" : "text-[#9CA3AF]"}`}>
+            {score}
+          </span>
+          <button onClick={() => vote(-1)} className={`text-[15px] leading-none p-1 rounded transition ${myVote === -1 ? "text-[#9494FF]" : "text-[#4B5563] hover:text-[#9494FF]"}`}>
+            &#9660;
+          </button>
         </div>
 
-        <Link href={`/tweet/${tweet.id}`} className="block">
-          <p className="text-[14px] leading-relaxed text-text-secondary whitespace-pre-wrap break-words">
-            {tweet.content}
-          </p>
-        </Link>
-
-        {media.length > 0 && (
-          <div className={`mt-2.5 grid gap-1.5 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-            {media.slice(0, 4).map((url: string, i: number) => (
-              <div key={i} className="overflow-hidden rounded-lg border border-border">
-                <img src={url} alt="" className="w-full h-48 object-cover" loading="lazy" />
+        {/* Content */}
+        <div className="flex-1 min-w-0 p-3">
+          {/* Author */}
+          <div className="flex items-center gap-2 mb-1.5">
+            {tweet.x_author_pfp ? (
+              <img src={tweet.x_author_pfp} alt="" className="w-6 h-6 rounded-full border border-[#252534] shrink-0 object-cover" loading="lazy" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-[#7C5CFF]/20 flex items-center justify-center text-[9px] font-bold text-[#7C5CFF] shrink-0">
+                {tweet.x_author_name?.[0] || "?"}
               </div>
-            ))}
+            )}
+            <div className="flex items-center gap-1.5 text-[11px] flex-wrap">
+              <span className="font-semibold text-[#F0F0F5]">{tweet.x_author_name}</span>
+              <span className="text-[#4B5563]">@{tweet.x_author_handle}</span>
+              <span className="text-[#3A3A50]">·</span>
+              <span className="text-[#4B5563]">{timeAgo}</span>
+            </div>
           </div>
-        )}
 
-        <div className="mt-2.5 flex items-center gap-0.5 text-xs">
-          <Link href={`/tweet/${tweet.id}`} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary transition">
-            <MessageSquare size={14} />
-            <span>{comments || 0}</span>
+          {/* Text */}
+          <Link href={`/tweet/${tweet.id}`} className="block">
+            <p className="text-[13px] leading-[1.5] text-[#D1D5DB] whitespace-pre-wrap break-words">
+              {cleanContent}
+            </p>
           </Link>
-          <button onClick={() => setShowTip(true)} className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-accent hover:bg-accent/10 transition font-medium">
-            <Zap size={14} />
-            <span>Tip</span>
-          </button>
-          <a href={tweet.x_url} target="_blank" rel="noopener" className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-bg-tertiary transition ml-auto">
-            <ExternalLink size={13} />
-          </a>
+
+          {/* Media - STRICTLY constrained */}
+          {media.length > 0 && (
+            <div className={`mt-2 grid gap-1.5 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+              {media.slice(0, 4).map((url: string, i: number) => (
+                <div key={i} className="relative overflow-hidden rounded-lg border border-[#252534] bg-[#0B0B0F]" style={{ maxHeight: "200px" }}>
+                  <img 
+                    src={url} 
+                    alt="" 
+                    className="w-full h-full object-cover" 
+                    style={{ maxHeight: "200px" }}
+                    loading="lazy" 
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="mt-2 flex items-center gap-0.5 text-[11px]">
+            <Link href={`/tweet/${tweet.id}`} className="flex items-center gap-1 px-2 py-1 rounded-md text-[#4B5563] hover:text-[#9CA3AF] hover:bg-[#1A1A24] transition">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>{comments || 0}</span>
+            </Link>
+            <button onClick={() => setShowTip(true)} className="flex items-center gap-1 px-2 py-1 rounded-md text-[#7C5CFF] hover:bg-[#7C5CFF]/10 transition font-medium">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>Tip</span>
+            </button>
+            <a href={tweet.x_url} target="_blank" rel="noopener" className="flex items-center gap-1 px-2 py-1 rounded-md text-[#4B5563] hover:text-[#9CA3AF] hover:bg-[#1A1A24] transition ml-auto">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -163,12 +187,10 @@ export function PostCard({ tweet, creatorWallet }: { tweet: any; creatorWallet?:
       {showTip && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowTip(false)}>
           <div className="absolute inset-0 bg-black/60" />
-          <div className="relative bg-bg-secondary border border-border rounded-xl p-5 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+          <div className="relative bg-[#1A1A24] border border-[#2A2A40] rounded-xl p-5 w-full max-w-sm" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-sm">Tip @{tweet.x_author_handle}</h3>
-              <button onClick={() => setShowTip(false)} className="text-text-tertiary hover:text-text-primary transition">
-                <span className="text-lg">&times;</span>
-              </button>
+              <button onClick={() => setShowTip(false)} className="text-[#4B5563] hover:text-[#F0F0F5] text-lg">&times;</button>
             </div>
 
             {tipStatus === "sent" ? (
@@ -178,18 +200,14 @@ export function PostCard({ tweet, creatorWallet }: { tweet: any; creatorWallet?:
             ) : (
               <>
                 <div className="flex gap-2 mb-4">
-                  {[
-                    { k: 1, icon: "☕", amount: "0.01" },
-                    { k: 2, icon: "🍕", amount: "0.05" },
-                    { k: 3, icon: "🐸", amount: "0.1" },
-                  ].map(t => (
-                    <button key={t.k} onClick={() => setTipTier(t.k)} className={`flex-1 py-2.5 rounded-lg text-xs border transition ${tipTier === t.k ? "bg-accent border-accent text-white" : "bg-bg-tertiary border-border text-text-secondary hover:border-border-hover"}`}>
-                      <div className="text-base mb-0.5">{t.icon}</div>
-                      <div className="font-mono">{t.amount} MON</div>
+                  {[{k:1,l:"Small",a:"0.01"},{k:2,l:"Medium",a:"0.05"},{k:3,l:"Large",a:"0.1"}].map(t => (
+                    <button key={t.k} onClick={() => setTipTier(t.k)} className={`flex-1 py-2.5 rounded-lg text-xs border transition ${tipTier===t.k?"bg-[#7C5CFF] border-[#7C5CFF] text-white":"bg-[#13131A] border-[#252534] text-[#9CA3AF] hover:border-[#3A3A50]"}`}>
+                      <div className="font-medium">{t.l}</div>
+                      <div className="font-mono opacity-70">{t.a} MON</div>
                     </button>
                   ))}
                 </div>
-                <button onClick={sendTip} disabled={tipStatus === "loading" || tipStatus === "confirm" || tipStatus === "saving"} className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 py-2.5 rounded-lg font-medium text-sm text-white transition">
+                <button onClick={sendTip} disabled={tipStatus==="loading"||tipStatus==="confirm"||tipStatus==="saving"} className="w-full bg-[#7C5CFF] hover:bg-[#8B6DFF] disabled:opacity-50 py-2.5 rounded-lg font-medium text-sm text-white transition">
                   {tipStatus === "loading" ? "Loading..." : tipStatus === "confirm" ? "Confirm in wallet..." : tipStatus === "saving" ? "Saving..." : tipStatus.startsWith("error") ? "Retry" : "Send Tip"}
                 </button>
                 {tipStatus.startsWith("error") && <p className="text-xs text-red-400 mt-2 text-center">{tipStatus}</p>}

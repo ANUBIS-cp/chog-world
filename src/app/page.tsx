@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { PostCard } from "@/components/PostCard";
 import { supabase } from "@/lib/supabase";
-import { Flame, Clock, Trophy } from "lucide-react";
 
 export default function Home() {
   const [tweets, setTweets] = useState<any[]>([]);
@@ -61,15 +60,14 @@ export default function Home() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold">{search ? `Search: ${search}` : sort === "hot" ? "Hot" : sort === "new" ? "New" : "Top"}</h1>
-        <div className="flex gap-1 bg-bg-secondary rounded-lg p-0.5 border border-border">
+        <div className="flex gap-1 bg-[#13131A] rounded-lg p-0.5 border border-[#1E1E2E]">
           {[
-            { key: "hot", icon: Flame, label: "Hot" },
-            { key: "new", icon: Clock, label: "New" },
-            { key: "top", icon: Trophy, label: "Top" },
+            { key: "hot", label: "Hot" },
+            { key: "new", label: "New" },
+            { key: "top", label: "Top" },
           ].map(tab => (
-            <button key={tab.key} onClick={() => changeSort(tab.key)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md font-medium transition ${sort === tab.key ? "bg-accent text-white" : "text-text-tertiary hover:text-text-secondary"}`}>
-              <tab.icon size={13} />
-              <span className="hidden sm:inline">{tab.label}</span>
+            <button key={tab.key} onClick={() => changeSort(tab.key)} className={`px-3 py-1 text-xs rounded-md font-medium transition ${sort===tab.key?"bg-[#7C5CFF] text-white":"text-[#4B5563] hover:text-[#9CA3AF]"}`}>
+              {tab.label}
             </button>
           ))}
         </div>
@@ -79,12 +77,21 @@ export default function Home() {
         {tweets.map(t => <PostCard key={t.id} tweet={t} creatorWallet={wallets[t.x_author_handle?.toLowerCase()] || null} />)}
       </div>
 
-      {loading && tweets.length === 0 && <div className="text-center text-text-tertiary py-20">Loading...</div>}
-      {!loading && tweets.length === 0 && <div className="text-center text-text-tertiary py-20">No posts</div>}
+      {loading && tweets.length === 0 && (
+        <div className="space-y-3 mt-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-[#13131A] border border-[#1E1E2E] rounded-xl h-32 animate-pulse" />
+          ))}
+        </div>
+      )}
+
+      {!loading && tweets.length === 0 && (
+        <div className="text-center text-[#4B5563] py-20">No posts</div>
+      )}
 
       {hasMore && !loading && (
         <div className="mt-4 text-center">
-          <button onClick={() => loadTweets(offset, false, sort, search)} className="px-5 py-2 bg-bg-tertiary border border-border rounded-lg text-xs text-text-secondary hover:border-border-hover hover:text-text-primary transition">
+          <button onClick={() => loadTweets(offset, false, sort, search)} className="px-5 py-2 bg-[#1A1A24] border border-[#252534] rounded-lg text-xs text-[#9CA3AF] hover:border-[#3A3A50] hover:text-[#F0F0F5] transition">
             Load More
           </button>
         </div>
