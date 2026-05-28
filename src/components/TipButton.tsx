@@ -7,7 +7,7 @@ const TIERS = [ { key: 1, label: "0.01 MON", emoji: "☕" }, { key: 2, label: "0
 const ESCROW = "0xca29b70a9Bb6D663a51218c58CEe725ec45fEDC3";
 
 export function TipButton({ tweetId, toHandle, toName, creatorWallet }: any) {
-  const { address, sendTx } = useWallet();
+  const { address, chainId, sendTx } = useWallet();
   const [showModal, setShowModal] = useState(false);
   const [tier, setTier] = useState(1);
   const [status, setStatus] = useState("");
@@ -15,6 +15,7 @@ export function TipButton({ tweetId, toHandle, toName, creatorWallet }: any) {
 
   async function handleTip() {
     if (!address) return alert("Connect wallet first!");
+    if (chainId !== 10143) return alert("Please switch to Monad Testnet in your wallet");
     setStatus("loading...");
     try {
       const res = await fetch("/api/tip-amount?tier=" + tier);
