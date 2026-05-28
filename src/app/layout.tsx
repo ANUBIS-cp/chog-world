@@ -8,23 +8,24 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Chog World — Meme Feed & Tipping",
-  description: "The Chog community feed. Vote, tip, and comment on the best Chog memes.",
+  title: "Chog World — CHOG Meme Feed",
+  description: "Vote, tip, and comment on Chog memes from X. Built on Monad.",
   openGraph: {
     title: "Chog World",
-    description: "Vote, tip, and comment on Chog memes.",
-    images: ["/og.png"],
+    description: "Vote, tip, and comment on Chog memes. Built on Monad.",
+    type: "website",
   },
+  twitter: { card: "summary_large_image", title: "Chog World" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-[#0a0a0f] text-white min-h-screen`}>
+      <body className={inter.className + " bg-[#0a0a0f] text-zinc-200 min-h-screen antialiased"}>
         <Providers>
           <Ticker />
           <Nav />
-          <main className="max-w-2xl mx-auto px-4 pb-20">{children}</main>
+          <main className="max-w-2xl mx-auto px-4 pb-20 pt-6">{children}</main>
         </Providers>
       </body>
     </html>
