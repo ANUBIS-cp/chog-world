@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServiceClient } from "@/lib/api";
+import { getServiceClient } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,7 +7,8 @@ export async function POST(req: NextRequest) {
     if (!tweetId || !txHash) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     const supabase = getServiceClient();
     const { error } = await supabase.from("tips").insert({
-      tweet_id: tweetId, from_user_id: fromUserId, to_x_handle: toHandle, amount: amountWei || "0", token: "MON", tx_hash: txHash, verified: false,
+      tweet_id: tweetId, from_user_id: fromUserId, to_x_handle: toHandle,
+      amount: amountWei || "0", token: "MON", tx_hash: txHash, verified: false,
     });
     if (error) {
       if (error.code === "23505") return NextResponse.json({ error: "Duplicate" }, { status: 409 });

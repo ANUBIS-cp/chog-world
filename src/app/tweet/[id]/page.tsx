@@ -2,9 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { TweetCard } from "@/components/TweetCard";
+import { PostCard } from "@/components/PostCard";
 import { CommentSection } from "@/components/CommentSection";
-import { Nav } from "@/components/Nav";
 import Link from "next/link";
 
 export default function TweetPage() {
@@ -28,16 +27,15 @@ export default function TweetPage() {
 
   return (
     <div>
-      <Nav />
-      <main className="max-w-2xl mx-auto px-4 pb-20 pt-4">
-        <Link href="/" className="text-xs text-[#4B5563] hover:text-[#F0F0F5] mb-3 inline-block">← Back</Link>
-        {loading ? <div className="text-center py-20 text-[#4B5563]">Loading...</div> :
-         !tweet ? <div className="text-center py-20 text-[#4B5563]">Not found</div> :
-         <div>
-           <TweetCard tweet={tweet} creatorWallet={creatorWallet} />
-           <CommentSection tweetId={tweet.id} />
-         </div>}
-      </main>
+      <Link href="/" className="text-xs text-text-tertiary hover:text-text-primary mb-3 inline-block transition">
+        &larr; Back
+      </Link>
+      {loading ? <div className="text-center text-text-tertiary py-20">Loading...</div> :
+       !tweet ? <div className="text-center text-text-tertiary py-20">Not found</div> :
+       <div>
+         <PostCard tweet={tweet} creatorWallet={creatorWallet} />
+         <CommentSection tweetId={tweet.id} />
+       </div>}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServiceClient } from "@/lib/api";
+import { getServiceClient } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   const { tweetId, userId, content, parentId } = await req.json();
