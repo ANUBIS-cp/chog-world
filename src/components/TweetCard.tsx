@@ -135,11 +135,11 @@ export function TweetCard({ tweet, creatorWallet }: any) {
         <Link href={"/tweet/"+tweet.id} className="text-zinc-500 hover:text-zinc-300 ml-2">💬 {commentCount||0}</Link>
         
         {/* Inline tip button — no separate component */}
-        {!address ? (
-          <button onClick={connectWallet} className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-lg text-sm font-medium transition">💸 Tip</button>
-        ) : (
-          <button onClick={() => setShowTip(true)} className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-lg text-sm font-medium transition">💸 Tip</button>
-        )}
+        <button onClick={() => {
+          alert("Tip button clicked! " + (address ? "connected: " + address : "not connected"));
+          if (!address) connectWallet();
+          else setShowTip(true);
+        }} className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-lg text-sm font-medium transition cursor-pointer">💸 Tip</button>
 
         <Link href={tweet.x_url} target="_blank" className="text-zinc-600 hover:text-blue-400 ml-auto text-xs">X ↗</Link>
       </div>
